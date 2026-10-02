@@ -1,0 +1,175 @@
+# ==============================================================================
+# GPX Overlay Engine - Standard Configuration
+# ==============================================================================
+# Global settings, canvas sizing, and layout hierarchy for video rendering.
+# RGBA colors are defined as floats from 0.0 to 1.0: [R, G, B, Alpha].
+# ==============================================================================
+
+# Input & Output Paths
+gpx_file = "data/sample_activity.gpx"
+output_path = "output/overlay_render.png" # Standard output target (.png/.mp4)
+
+# Global Timecode Offset (in seconds) to synchronize GPX track with video start
+tc_offset = 0
+
+[canvas]
+width = 3840
+height = 2160
+
+# ------------------------------------------------------------------------------
+# Root Track Map Widget
+# Serves as the primary anchor for the right-hand telemetry cluster.
+# ------------------------------------------------------------------------------
+[widgets.track]
+type = "track"
+enabled = true
+position = [3150, 100] # [x, y] screen coordinates
+width = 600
+
+[widgets.track.track]
+line_width = 8.0
+glow_width = 16.0
+color = [1.0, 1.0, 1.0, 1.0]
+
+[widgets.track.marker]
+radius = 16
+color = [1.0, 0.5, 0.0, 1.0]
+
+# ------------------------------------------------------------------------------
+# Chained Distance Display
+# Demonstrates relative anchoring and mathematical unit conversions (m to km).
+# ------------------------------------------------------------------------------
+[widgets.dist_val]
+type = "telemetry_text"
+enabled = true
+anchor = "track" # Anchored relative to [widgets.track]
+position = [200, 200]
+width = 150
+height = 60
+data_key = "distance"
+formula = "val * 0.001" # Converts raw metres to kilometres
+template = "{val:.1f}"
+
+[widgets.dist_val.style]
+font_family = "DejaVu Sans"
+color = [1.0, 1.0, 1.0, 1.0]
+align = "right" # Options: "left", "center", "right" (accounts for outline padding)
+
+[widgets.dist_unit]
+type = "static_text"
+enabled = true
+anchor = "dist_val" # Chained anchor relative to [widgets.dist_val]
+position = [160, 20]
+height = 40
+text = "KM"
+
+[widgets.dist_unit.style]
+font_family = "DejaVu Sans"
+color = [1.0, 1.0, 1.0, 1.0]
+
+# ------------------------------------------------------------------------------
+# Elevation Profile & Altitude Display
+# ------------------------------------------------------------------------------
+[widgets.profile]
+type = "elev_profile"
+enabled = true
+anchor = "track"
+position = [0, 350]
+width = 600
+height = 180
+
+[widgets.profile.profile]
+line_width = 6.0
+glow_width = 10.0
+color = [1.0, 1.0, 1.0, 1.0]
+bg_color = [0.2, 0.2, 0.2, 0.4]
+
+[widgets.profile.marker]
+radius = 16
+color = [1.0, 0.5, 0.0, 1.0]
+
+[widgets.alt_val]
+type = "telemetry_text"
+enabled = true
+anchor = "profile"
+position = [70, 200]
+width = 220
+height = 50
+data_key = "alt"
+template = "{val:.0f}"
+
+[widgets.alt_val.style]
+font_family = "DejaVu Sans"
+color = [1.0, 1.0, 1.0, 1.0]
+align = "right"
+
+[widgets.alt_unit]
+type = "static_text"
+enabled = true
+anchor = "alt_val"
+position = [220, 10]
+height = 40
+text = "M"
+
+[widgets.alt_unit.style]
+font_family = "DejaVu Sans"
+color = [1.0, 1.0, 1.0, 1.0]
+
+# ------------------------------------------------------------------------------
+# Timestamps & Elapsed Duration
+# ------------------------------------------------------------------------------
+[widgets.local_time]
+type = "telemetry_text"
+enabled = true
+position = [100, 100]
+height = 60
+data_key = "time"
+tz_offset = 2.0 # Timezone offset in hours (e.g. +2 for CEST)
+template = "{val:%H:%M:%S}"
+
+[widgets.local_time.style]
+font_family = "DejaVu Sans"
+color = [1.0, 1.0, 1.0, 1.0]
+
+[widgets.elapsed_time]
+type = "telemetry_text"
+enabled = true
+anchor = "local_time"
+position = [0, 80]
+height = 60
+data_key = "elapsed_time"
+template = "ELAPSED: {val:%H:%M:%S}"
+
+[widgets.elapsed_time.style]
+font_family = "DejaVu Sans"
+color = [1.0, 0.8, 0.0, 1.0]
+
+# ------------------------------------------------------------------------------
+# Sensor Telemetry (Temperature)
+# ------------------------------------------------------------------------------
+[widgets.temp_val]
+type = "telemetry_text"
+enabled = true
+anchor = "alt_val"
+position = [300, 0]
+width = 140
+height = 50
+data_key = "temp"
+template = "{val:.0f}"
+
+[widgets.temp_val.style]
+font_family = "DejaVu Sans"
+color = [1.0, 1.0, 1.0, 1.0]
+align = "right"
+
+[widgets.temp_unit]
+type = "static_text"
+enabled = true
+anchor = "temp_val"
+position = [140, 10]
+height = 40
+text = "°C"
+
+[widgets.temp_unit.style]
+font_family = "DejaVu Sans"
+color = [1.0, 1.0, 1.0, 1.0]

@@ -1,0 +1,23 @@
+# Python / Virtual Environment
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+
+# IDE / Editor Files
+.vscode/
+.idea/
+*.swp
+
+# Application Data & Rendered Outputs
+*.png
+*.jpg
+*.mp4
+*.mov
+layout.toml
+
+# OS Specific
+.DS_Store
+Thumbs.db

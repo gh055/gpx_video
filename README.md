@@ -16,6 +16,11 @@ GPX_Video renders high-performance, frame-accurate telemetry graphics (speed, el
 
 ---
 
+## Example
+![Example Image](/example.jpg)
+
+---
+
 ## Architecture Overview
 
 ```

@@ -61,7 +61,7 @@ class TimeUtils:
     Convert UNIX epoch to datetime string
     """
     def epoch_to_dt(epoch):
-        return self.fromtimestamp(epoch, tz).strftime("%a %b %d %Y %H:%M:%S")
+        return TimeUtils.fromtimestamp(epoch, tz=timezone.utc).strftime("%a %b %d %Y %H:%M:%S")
 
     
     """

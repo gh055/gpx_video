@@ -12,9 +12,17 @@ License: MIT
 
 import sys
 import subprocess
+import tempfile
+import os
 
 
 class FFmpeg:
+
+    def __init__(self):
+
+        self.log_file = None
+        self.process = None
+
 
     """
     Open the ffmpeg pipeline for subsequent frame output to a destination file
@@ -39,17 +47,22 @@ class FFmpeg:
             output_file
         ]
         
+        # Create a temporary file to store FFmpeg's log output
+        self.log_file = tempfile.NamedTemporaryFile(mode='w+', delete=False, suffix='.log')
+
         try:
             # Start FFmpeg process with stdin for input
+            # FFmpeg sends logs to stderr, stdout can go to DEVNULL
             self.process = subprocess.Popen(
                 ffmpeg_cmd,
                 stdin=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                stdout=subprocess.PIPE
+                stdout=subprocess.DEVNULL,
+                stderr=self.log_file
             )
 
         except Exception as e:
             print(f"FFmpeg Error: {e}.")
+            self._cleanup_log()
             sys.exit(1)
 
 
@@ -60,21 +73,19 @@ class FFmpeg:
 
         try:
             # Ensure we're sending complete frame data
-            if len(frame_data) == self.expected_frame_length:  # RGBA = 4 bytes per pixel
+            if len(frame_data) == self.expected_frame_length:
+                # RGBA = 4 bytes per pixel
                 self.process.stdin.write(frame_data)
             else:
                 print(f"Warning: Frame size mismatch. Expected {self.expected_frame_length}, got {len(frame_data)}")
 
         except BrokenPipeError:
             # Get FFmpeg output for debugging
-            stderr_output, stdout_output = self.process.communicate()
-            print("FFmpeg output:", stdout_output.decode())
-            print("FFmpeg error output:", stderr_output.decode())
-            sys.exit(1)
+            self._print_error_log_and_exit()
 
         except Exception as e:
             print(f"Error writing frame data: {e}")
-            sys.exit(1)
+            self._print_error_log_and_exit()
 
 
     """
@@ -82,10 +93,56 @@ class FFmpeg:
     """
     def close(self):
 
-        self.process.stdin.close()
+        if self.process and self.process.stdin:
+            self.process.stdin.close()
+            
         return_code = self.process.wait()
         
         if return_code != 0:
-            stderr_output, stdout_output = self.process.communicate()
-            print("FFmpeg error output:", stderr_output.decode())
-            sys.exit(1)
+            print(f"FFmpeg exited with error code {return_code}")
+            self._print_error_log_and_exit()
+
+        # Cleanup temporary file on success
+        self._cleanup_log()
+
+
+    """
+    Reads log content, outputs it to console, cleans up the file, and exits.
+    """
+    def _print_error_log_and_exit(self):
+
+        if self.log_file:
+
+            self.log_file.flush()
+
+            try:
+                with open(self.log_file.name, 'r') as f:
+                    logs = f.read()
+                if logs.strip():
+                    print("FFmpeg error output:\n", logs, file=sys.stderr)
+
+            except Exception as e:
+                print(f"Failed to read FFmpeg log file: {e}", file=sys.stderr)
+
+            finally:
+                self._cleanup_log()
+
+        sys.exit(1)
+
+
+    """
+    Closes and removes the temporary log file.
+    """
+    def _cleanup_log(self):
+
+        if self.log_file:
+
+            try:
+                self.log_file.close()
+                if os.path.exists(self.log_file.name):
+                    os.remove(self.log_file.name)
+
+            except Exception:
+                pass
+
+            self.log_file = None

@@ -60,9 +60,14 @@ def parse_arguments():
         sys.exit(1)
 
     if args.output_path:
-        config['output_path'] = args.output_path
+        raw_path = args.output_path
     elif 'output_path' not in config:
-        config['output_path'] = '.'
+        raw_path = '.'
+    else:
+        raw_path = config['output_path']
+
+    # Expand path (e.g. ~/...)
+    config['output_path'] = os.path.expanduser(raw_path)
 
     if args.tc_offset:
         config['tc_offset'] = args.tc_offset

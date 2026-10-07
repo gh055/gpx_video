@@ -51,7 +51,7 @@ class DaVinci:
         tl = self.timeline
         canvas_width = int(tl.GetSetting("timelineResolutionWidth"))
         canvas_height = int(tl.GetSetting("timelineResolutionHeight"))
-        frame_rate = int(tl.GetSetting("timelineFrameRate"))
+        frame_rate = float(tl.GetSetting("timelineFrameRate"))
 
         return canvas_width, canvas_height, frame_rate
 

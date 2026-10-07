@@ -79,8 +79,12 @@ if __name__ == "__main__":
     # Read GPX file
     gpx = GPXParser()
     gpx_points = gpx.parse(config['gpx_file'])
-    print(f"GPX file contains {len(gpx_points)} data points. Timecode offset is {tc_offset}s")
+    print(f"GPX file contains {len(gpx_points)} data points.")
 
+    # Base date from the first GPX point to anchor timecodes to calendar days
+    gpx_start_epoch = gpx_points[0]['time']
+    gpx_start_date = TimeUtils.fromtimestamp(gpx_start_epoch).strftime("%Y-%m-%d")
+    
     # Initialize rendering engine
     renderer = OverlayRenderer(config)
 
@@ -116,12 +120,21 @@ if __name__ == "__main__":
 
         # Get the timecode of the clip
         clip_props = media_pool_item.GetClipProperty()
-        date_created = clip_props.get("Date Created")
-        start_tc = TimeUtils.dt_to_epoch(date_created) + tc_offset
+        tc = clip_props.get("Start TC", "00:00:00:00")
+        print(f"Clip {idx}: Start TC {tc}")
+
+        # Calculate exact UTC Epoch start time for this clip
+        start_tc = TimeUtils.clip_tc_to_epoch(
+            start_tc=tc,
+            calendar_date_str=gpx_start_date,
+            tc_offset=tc_offset,
+            fps=frame_rate
+        )
+
         duration_frames = item.GetDuration()    # Actual duration on timeline
         left_offset = item.GetLeftOffset()      # Trimmed starting offset in frames
 
-        # Calculate the actual timecode (in seconds) after trims
+        # Calculate the actual timecode after left trims
         trimmed_start_tc = start_tc + int(left_offset / frame_rate)
 
         if args.info:

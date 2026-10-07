@@ -43,7 +43,7 @@ class GPXParser:
                 for point in segment.points:
                     if point.time is not None:
                         # Convert time to timestamp
-                        timestamp = int(point.time.timestamp())
+                        timestamp = point.time.timestamp()
 
                         if first_timestamp is None:
                             first_timestamp = timestamp

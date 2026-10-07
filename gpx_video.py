@@ -121,7 +121,6 @@ if __name__ == "__main__":
         # Get the timecode of the clip
         clip_props = media_pool_item.GetClipProperty()
         tc = clip_props.get("Start TC", "00:00:00:00")
-        print(f"Clip {idx}: Start TC {tc}")
 
         # Calculate exact UTC Epoch start time for this clip
         start_tc = TimeUtils.clip_tc_to_epoch(

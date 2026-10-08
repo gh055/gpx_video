@@ -76,6 +76,7 @@ class ElevationProfileWidget(BaseWidget):
     """
     def draw_template(self, 
         ctx: cairo.Context, 
+        render_ctx: RenderContext,
         gpx_points, 
         dummy_values
         ):
@@ -119,7 +120,7 @@ class ElevationProfileWidget(BaseWidget):
 
         # Draw optional dummy marker on static template
         if dummy_values:
-            self.draw(ctx, 0) # Dummy frametime (resolves to first timestamp)
+            self.draw(ctx, render_ctx, 0) # Dummy frametime (resolves to first timestamp)
             return
 
 

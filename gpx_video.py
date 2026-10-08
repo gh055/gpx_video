@@ -153,8 +153,7 @@ if __name__ == "__main__":
             # Calculate the drift-corrected timestamp for this frame
             t = drift_calc.clip_tc_to_true_gpx_epoch(
                 start_tc=trimmed_start_tc,
-                frame_idx=frame_idx,
-                fps=frame_rate
+                frame_idx=frame_idx
             )
 
             # Draw active dynamic widgets on template

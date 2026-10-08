@@ -77,7 +77,7 @@ class OverlayRenderer:
 
         # Draw the static portions of all widgets
         for widget in self.widgets:
-            widget.draw_template(ctx, gpx_points, dummy_values)
+            widget.draw_template(ctx, self.render_ctx, gpx_points, dummy_values)
 
         return self.template
 

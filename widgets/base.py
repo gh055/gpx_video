@@ -45,6 +45,7 @@ class BaseWidget(ABC):
     @abstractmethod
     def draw_template(self, 
         ctx: cairo.Context, 
+        render_ctx: RenderContext,
         gpx_points, 
         dummy_values
         ):

@@ -12,10 +12,12 @@ License: MIT
 
 import cairo
 
-# Decorator for auto-discovery
+from core.context import RenderContext
+
 from widgets.base import BaseWidget
 from widgets.factory import WidgetFactory
 
+# Decorator for auto-discovery
 @WidgetFactory.register("static_text")
 
 
@@ -80,7 +82,11 @@ class StaticTextWidget(BaseWidget):
     Draw the widget onto the Cairo ctx using frame_data.
     frame_data contains current point telemetry: x, y, alt, hr, temp, etc.
     """
-    def draw(self, ctx: cairo.Context, frame_time):
+    def draw(self, 
+        ctx: cairo.Context, 
+        render_ctx: RenderContext, 
+        frame_time
+        ):
         
         # Static text already drawn in template
         return

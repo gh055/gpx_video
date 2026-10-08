@@ -11,12 +11,8 @@ License: MIT
 """
 
 import re
-from datetime import (
-    datetime,
-    timezone, 
-    time,
-    timedelta
-)
+from datetime import datetime, timezone, time, timedelta
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 
 class TimeUtils:
@@ -44,6 +40,7 @@ class TimeUtils:
     """
     @staticmethod
     def fromtimestamp(t, tz=timezone.utc):
+
         return datetime.fromtimestamp(t, tz=tz)
 
 
@@ -52,6 +49,7 @@ class TimeUtils:
     """
     @staticmethod
     def epoch_to_dt(epoch):
+
         return TimeUtils.fromtimestamp(epoch, tz=timezone.utc).strftime("%a %b %d %Y %H:%M:%S")
 
     
@@ -60,6 +58,7 @@ class TimeUtils:
     """
     @staticmethod
     def create_time_obj(hours, minutes, seconds):
+
         return time(hour=min(hours, 23), minute=minutes, second=seconds)
 
 
@@ -68,23 +67,19 @@ class TimeUtils:
     elapsed wall-clock seconds from midnight.
     """
     @staticmethod
-    def tc_to_seconds(tc_string, fps=29.97):
-        
+    def tc_to_seconds(tc_string:str, fps=29.97):
+
         parts = [int(p) for p in re.split(r'[:;]', tc_string)]
-        h, m, s, f = parts[0], parts[1], parts[2], parts[3]
-        
-        # Check for Drop-Frame indicator ';'
+        h, m, s = parts[0], parts[1], parts[2]
+        f = parts[3] if len(parts) > 3 else 0
+
         if ';' in tc_string:
             nominal_fps = 30
             drop_frames = 2
             total_minutes = h * 60 + m
             drop_events = total_minutes - (total_minutes // 10)
-            
-            # Total physical frames played
             total_frames = (h * 3600 + m * 60 + s) * nominal_fps + f - (drop_events * drop_frames)
-            # Exact NTSC rate (30000 / 1001)
             return total_frames / (30000 / 1001)
-
         else:
             nominal_fps = round(fps) if isinstance(fps, float) else fps
             total_frames = (h * 3600 + m * 60 + s) * nominal_fps + f
@@ -110,3 +105,31 @@ class TimeUtils:
             
         # Absolute Start Epoch = Base Date Midnight + Clip Start TC Seconds + User Sync Calibration Offset
         return date_epoch + tc_seconds + tc_offset
+
+
+    """
+    Parses a timezone string into a python tzinfo object.
+    Supports IANA names (e.g., 'Europe/Zurich'), 'UTC+X' / 'UTC-X', or numeric offsets.
+    """
+    @staticmethod
+    def parse_timezone(tz_setting):
+
+        if not tz_setting or tz_setting.upper() in ("UTC", "Z"):
+            return timezone.utc
+
+        # Handle standard IANA names (e.g., 'Europe/Zurich', 'America/New_York')
+        try:
+            return ZoneInfo(str(tz_setting))
+
+        except ZoneInfoNotFoundError:
+            pass
+
+        # Handle "UTC+X", "UTC-X", "GMT+X", etc.
+        utc_match = re.match(r'^(?:UTC|GMT)?([+-]?\d+(?:\.\d+)?)$', str(tz_setting).strip(), re.IGNORECASE)
+        if utc_match:
+            hours_offset = float(utc_match.group(1))
+            return timezone(timedelta(hours=hours_offset))
+
+        # Fallback to UTC if format is unrecognized
+        print(f"Warning: Could not parse timezone '{tz_setting}'. Defaulting to UTC.")
+        return timezone.utc

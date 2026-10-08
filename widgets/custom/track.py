@@ -13,11 +13,13 @@ License: MIT
 import math
 import cairo
 
-# Decorator for auto-discovery
+from core.context import RenderContext
+
 from widgets.base import BaseWidget
 from widgets.factory import WidgetFactory
 from widgets.interpolate import WidgetDataInterpolator
 
+# Decorator for auto-discovery
 @WidgetFactory.register("track")
 
 
@@ -140,7 +142,11 @@ class TrackWidget(BaseWidget):
     Draw the widget onto the Cairo context using frame_data.
     frame_data contains current point telemetry: x, y, alt, hr, temp, etc.
     """
-    def draw(self, ctx: cairo.Context, frame_time):
+    def draw(self, 
+        ctx: cairo.Context, 
+        render_ctx: RenderContext, 
+        frame_time
+        ):
 
         # Get interpolated canvas coordinates
         x, y = self.interpolator.get_value(frame_time)

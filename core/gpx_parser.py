@@ -13,19 +13,32 @@ License: MIT
 import sys
 import gpxpy
 
+from core.timeutils import TimeUtils
 from core.kalman import KalmanFilter1D
 from metrics.factory import MetricFactory
 
 
 class GPXParser:
 
+    def __init__(self, config: dict):
+        self.gpx_file_path = config.get('file', None)
+        self.gpx_timezone = TimeUtils.parse_timezone(config.get('timezone', 'UTC'))
+
+
+    """
+    Return GPX file timezone (from configuration)
+    """
+    def timezone(self):
+        return self.gpx_timezone
+
+
     """
     Parse GPX file and extract track points with time, lat/lon, and elevation.
     """
-    def parse(self, gpx_file_path: str, window: int = 5) -> list[dict]:
+    def parse(self, window: int = 5) -> list[dict]:
 
         try:
-            with open(gpx_file_path, 'r', encoding='utf-8') as gpx_file:
+            with open(self.gpx_file_path, 'r', encoding='utf-8') as gpx_file:
                 gpx = gpxpy.parse(gpx_file)
 
         except Exception as e:

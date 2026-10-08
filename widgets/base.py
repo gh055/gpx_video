@@ -13,6 +13,8 @@ License: MIT
 from abc import ABC, abstractmethod
 import cairo
 
+from core.context import RenderContext
+
 
 class BaseWidget(ABC):
 
@@ -55,6 +57,10 @@ class BaseWidget(ABC):
     frame_data contains current point telemetry: x, y, alt, hr, temp, etc.
     """
     @abstractmethod
-    def draw(self, ctx: cairo.Context, frame_data: dict):
+    def draw(self, 
+        ctx: cairo.Context, 
+        render_ctx: RenderContext, 
+        frame_data: dict
+        ):
 
         pass

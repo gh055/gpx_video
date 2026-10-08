@@ -14,6 +14,7 @@ import cairo
 from cairo import ImageSurface as VideoFrame
 from cairo import Context as VideoContext
 
+from core.context import RenderContext
 from widgets.factory import WidgetFactory
 
 
@@ -22,20 +23,14 @@ class OverlayRenderer:
     """
     Initialize rendering engine
     """
-    def __init__(self, config):
+    def __init__(self, widgets: dict, render_ctx: RenderContext):
 
-        # Store canvas width and height
-        canvas = config.get("canvas", {})
-        self.canvas_width = canvas.get("width", 3840)
-        self.canvas_height = canvas.get("height", 2160)
-
-        # Extract dictionary of widget configurations
-        widgets_dict = config.get("widgets", {})
+        self.render_ctx = render_ctx
 
         # Transform dictionary into a list of config dicts with 'name' injected
         widget_configs = [
             {"name": name, **cfg}
-            for name, cfg in widgets_dict.items()
+            for name, cfg in widgets.items()
             if cfg.get("enabled", True)  # Filter out disabled widgets if needed
         ]
 
@@ -60,7 +55,11 @@ class OverlayRenderer:
     """
     def empty_frame(self) -> tuple[VideoFrame, VideoContext]:
 
-        frame = VideoFrame(cairo.FORMAT_ARGB32, self.canvas_width, self.canvas_height)
+        frame = VideoFrame(
+            cairo.FORMAT_ARGB32, 
+            self.render_ctx.canvas_width, 
+            self.render_ctx.canvas_height
+        )
         ctx = cairo.Context(frame)
         return frame, ctx
 
@@ -97,4 +96,4 @@ class OverlayRenderer:
 
         # 2. Draw all active widgets sequentially
         for widget in self.widgets:
-            widget.draw(ctx, frame_time)
+            widget.draw(ctx, self.render_ctx, frame_time)

@@ -12,14 +12,15 @@ License: MIT
 
 import cairo
 
-# Decorator for auto-discovery
 from widgets.base import BaseWidget
 from widgets.factory import WidgetFactory
 from widgets.interpolate import WidgetDataInterpolator
 
+from core.context import RenderContext
 from core.expressions import SafeExpression
-from core.time_utils import TimeUtils
+from core.timeutils import TimeUtils
 
+# Decorator for auto-discovery
 @WidgetFactory.register("telemetry_text")
 
 
@@ -33,9 +34,6 @@ class TelemetryTextWidget(BaseWidget):
         self.data_key = config.get("data_key", "")
         self.template = config.get("template", "{val}")
         self.formula = config.get("formula", None)  # Optional math formula string
-
-        # Parse timezone offset (supports float/int hours like +2 or -5.5)
-        self.tz = TimeUtils.get_timezone(config.get("tz_offset", 0.0))
 
         self.height = self.height or 24
 
@@ -70,7 +68,11 @@ class TelemetryTextWidget(BaseWidget):
     Draw the widget onto the Cairo context using frame_data.
     frame_data contains current point telemetry: x, y, alt, hr, temp, etc.
     """
-    def draw(self, ctx: cairo.Context, frame_time):
+    def draw(self, 
+        ctx: cairo.Context, 
+        render_ctx: RenderContext, 
+        frame_time
+        ):
         
         # Get interpolated key value
         val = self.interpolator.get_value(frame_time)
@@ -93,7 +95,7 @@ class TelemetryTextWidget(BaseWidget):
                 text = self.template.format(val=t_obj)
             else:
                 # Absolute epoch GPS timestamp
-                dt = TimeUtils.fromtimestamp(val, tz=self.tz)
+                dt = TimeUtils.fromtimestamp(val, tz=render_ctx.timezone)
                 text = self.template.format(val=dt)
 
         else:

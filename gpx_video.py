@@ -37,12 +37,13 @@ License: MIT
 """
 
 import sys
-import numpy as np
 
-from core.time_utils import TimeUtils
+from core.timeutils import TimeUtils
+from core.timecode import TimecodeDriftCalculator
 from core.davinci_api import DaVinci
 from core.arg_parser import parse_arguments
 from core.gpx_parser import GPXParser
+from core.context import RenderContext
 from core.renderer import OverlayRenderer
 from core.ffmpeg import FFmpeg
 
@@ -66,7 +67,6 @@ if __name__ == "__main__":
     canvas_width = cfg_canvas.get("width", pr_canvas_width)
     canvas_height = cfg_canvas.get("height", pr_canvas_height)
     frame_rate = cfg_canvas.get("frame_rate", pr_frame_rate)
-    tc_offset = config.get("tc_offset", 0)
 
     # Update config with actual canvas properties
     config['canvas'] = {
@@ -77,19 +77,34 @@ if __name__ == "__main__":
     print(f"Using {canvas_width}x{canvas_height} canvas @ {frame_rate} fps.")
 
     # Read GPX file
-    gpx = GPXParser()
-    gpx_points = gpx.parse(config['gpx_file'])
+    gpx = GPXParser(config.get('gpx', {}))
+    gpx_points = gpx.parse()
     print(f"GPX file contains {len(gpx_points)} data points.")
 
-    # Base date from the first GPX point to anchor timecodes to calendar days
+    # Get local timezone
+    tc_cfg = config.get("timecode", {})
+    local_tz = TimeUtils.parse_timezone(tc_cfg.get("timezone", "UTC"))
+
+    # Extract track base date from GPX file
     gpx_start_epoch = gpx_points[0]['time']
-    gpx_start_date = TimeUtils.fromtimestamp(gpx_start_epoch).strftime("%Y-%m-%d")
-    
+    gpx_start_date = TimeUtils.fromtimestamp(gpx_start_epoch, tz=local_tz).strftime("%Y-%m-%d")
+
+    # Initialize calculator with gpx and timecode configs
+    drift_calc = TimecodeDriftCalculator(
+        tc_cfg=tc_cfg,
+        gpx_start_date=gpx_start_date
+    )   
+
     # Initialize rendering engine
-    renderer = OverlayRenderer(config)
+    render_ctx = RenderContext(
+        timezone=local_tz,
+        canvas_width=canvas_width,
+        canvas_height=canvas_height
+    )
+    renderer = OverlayRenderer(config.get("widgets", {}), render_ctx)
 
     # Create preview .PNG and exit if output path points to an image file
-    output_path = config['output_path']
+    output_path = config.get('main', {})['output_path']
     if output_path.lower().endswith(".png"):
         # Create a template with dummy values
         static_canvas = renderer.draw_template(gpx_points, True)
@@ -120,34 +135,27 @@ if __name__ == "__main__":
 
         # Get the timecode of the clip
         clip_props = media_pool_item.GetClipProperty()
-        tc = clip_props.get("Start TC", "00:00:00:00")
-
-        # Calculate exact UTC Epoch start time for this clip
-        start_tc = TimeUtils.clip_tc_to_epoch(
-            start_tc=tc,
-            calendar_date_str=gpx_start_date,
-            tc_offset=tc_offset,
-            fps=frame_rate
-        )
-
-        duration_frames = item.GetDuration()    # Actual duration on timeline
+        start_tc_str = clip_props.get("Start TC", "00:00:00:00")
+        start_tc = TimeUtils.tc_to_seconds(start_tc_str, frame_rate)
+        total_frames = item.GetDuration()    # Actual number of frames on timeline
         left_offset = item.GetLeftOffset()      # Trimmed starting offset in frames
 
         # Calculate the actual timecode after left trims
-        trimmed_start_tc = start_tc + int(left_offset / frame_rate)
-
-        if args.info:
-            print(f"First GPX Time: {TimeUtils.epoch_to_dt(gpx_points[0]['time'])}")
-            print(f"First Clip Time: {TimeUtils.epoch_to_dt(trimmed_start_tc)}")
-            break
+        trimmed_start_tc = start_tc + (left_offset / frame_rate)
 
         # Create the video sequence for this clip
         ffmpeg.open(canvas_width, canvas_height, frame_rate, f"{output_path}/gpx{idx:04d}.mov")
         frame_count = 0
 
         # Loop through all individual video frames
-        frame_times = np.linspace(trimmed_start_tc, trimmed_start_tc + (duration_frames / frame_rate), num=duration_frames)
-        for t in frame_times:
+        for frame_idx in range(total_frames): 
+
+            # Calculate the drift-corrected timestamp for this frame
+            t = drift_calc.clip_tc_to_true_gpx_epoch(
+                start_tc=trimmed_start_tc,
+                frame_idx=frame_idx,
+                fps=frame_rate
+            )
 
             # Draw active dynamic widgets on template
             renderer.draw_frame(ctx, t)
@@ -156,7 +164,7 @@ if __name__ == "__main__":
             ffmpeg.write(surface.get_data())
 
             frame_count += 1
-            print(f"Clip {idx}: {frame_count} of {duration_frames} frames\r", end='', flush=True)
+            print(f"Clip {idx}: {frame_count} of {total_frames} frames\r", end='', flush=True)
         
         # Close output video file
         print()

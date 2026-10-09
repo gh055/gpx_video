@@ -74,62 +74,7 @@ pip install -r requirements.txt
 
 ## Configuration
 
-Layouts are fully customizable via standard TOML config files.
-
-```toml
-# config.toml
-gpx_file = "data/sample_activity.gpx"
-output_path = "output/overlay_render.png"
-
-[canvas]
-width = 3840
-height = 2160
-
-# 1. Base Track Map
-[widgets.track]
-type = "track"
-enabled = true
-position = [3150, 100]
-width = 600
-
-[widgets.track.track]
-line_width = 8.0
-color = [1.0, 1.0, 1.0, 1.0]
-
-[widgets.track.marker]
-radius = 16
-color = [1.0, 0.5, 0.0, 1.0]
-
-# 2. Distance Text (Anchored to Track, m -> km conversion)
-[widgets.dist_val]
-type = "telemetry_text"
-enabled = true
-anchor = "track"
-position = [200, 200]
-width = 150
-height = 60
-data_key = "distance"
-formula = "val * 0.001"
-template = "{val:.1f}"
-
-[widgets.dist_val.style]
-font_family = "DejaVu Sans"
-color = [1.0, 1.0, 1.0, 1.0]
-align = "right"
-
-[widgets.dist_unit]
-type = "static_text"
-enabled = true
-anchor = "dist_val"
-position = [160, 20]
-height = 40
-text = "KM"
-
-[widgets.dist_unit.style]
-font_family = "DejaVu Sans"
-color = [1.0, 1.0, 1.0, 1.0]
-
-```
+Layouts are fully customizable via standard TOML config files. See [Example Configuration](config_example.toml) for possible configuration options and settings.
 
 ---
 

@@ -46,7 +46,7 @@ def parse_arguments():
     try:
         with open(args.config, 'rb') as f:
             config = tomllib.load(f)
-            main_cfg = config.get('main', {})
+            output_cfg = config.get('output', {})
 
     except Exception as e:
         print(f"Error parsing configuration file '{args.config}': {e}")
@@ -62,9 +62,9 @@ def parse_arguments():
     if args.output_path:
         raw_path = args.output_path
     else:
-        raw_path = main_cfg.get('output_path', '.')
+        raw_path = output_cfg.get('path', '.')
 
     # Expand path (e.g. ~/...)
-    config.setdefault('main', {})['output_path'] = os.path.expanduser(raw_path)
+    config.setdefault('output', {})['path'] = os.path.expanduser(raw_path)
 
     return args, config

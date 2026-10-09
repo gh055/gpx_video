@@ -5,9 +5,10 @@
 # RGBA colors are defined as floats from 0.0 to 1.0: [R, G, B, Alpha].
 # ==============================================================================
 
-[main]
+[output]
 # Output path for rendered video
 output_path = "output/overlay_render.png" # Standard output target (.png/.mp4)
+prefix = "gpx"
 
 # ------------------------------------------------------------------------------
 # GPX Input File and GPX Timezone
@@ -19,13 +20,19 @@ file = "data/sample_activity.gpx"
 # Two known GPX fixes and footage timecodes for timecode drift compensation
 # ------------------------------------------------------------------------------
 [timecode]
-#tc_offset = -7400 # Optional manual override of drift calculation
-timezone = "Europe/Berlin"
-first_gpx = "11:17:00"
-first_tc = "11:19:45"
-second_gpx = "16:19:02"
-second_tc = "16:30:31"
 fps = 29.97
+timezone = "Europe/Berlin"
+#tc_offset = -7400 # Optional manual override of drift calculation
+
+# Drift compensation fix points
+fix_points = [
+    { gpx = "15:11:17", tc = "15:16:53" },
+    { gpx = "15:20:49", tc = "15:26:26" },
+    { gpx = "15:50:43", tc = "15:55:07" },
+    { gpx = "16:09:24", tc = "16:14:59" },
+    { gpx = "16:31:17", tc = "16:36:54" },
+    { gpx = "16:40:25", tc = "16:45:58" }
+]
 
 # ------------------------------------------------------------------------------
 # Render canvas options

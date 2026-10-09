@@ -104,7 +104,8 @@ if __name__ == "__main__":
     renderer = OverlayRenderer(config.get("widgets", {}), render_ctx)
 
     # Create preview .PNG and exit if output path points to an image file
-    output_path = config.get('main', {})['output_path']
+    output_cfg = config.get('output', {})
+    output_path = output_cfg['path']
     if output_path.lower().endswith(".png"):
         # Create a template with dummy values
         static_canvas = renderer.draw_template(gpx_points, True)
@@ -114,6 +115,7 @@ if __name__ == "__main__":
     else:
         # Create a template without dummy values for video generation
         static_canvas = renderer.draw_template(gpx_points, False)  
+        output_prefix = output_cfg.get('prefix', 'gpx')
 
     # Extract clip metadata directly from Timeline Track 1 (Camera Footage)
     clips = dr.get_timeline_clips()
@@ -144,7 +146,7 @@ if __name__ == "__main__":
         trimmed_start_tc = start_tc + (left_offset / frame_rate)
 
         # Create the video sequence for this clip
-        ffmpeg.open(canvas_width, canvas_height, frame_rate, f"{output_path}/gpx{idx:04d}.mov")
+        ffmpeg.open(canvas_width, canvas_height, frame_rate, f"{output_path}/{output_prefix}{idx:04d}.mov")
         frame_count = 0
 
         # Loop through all individual video frames

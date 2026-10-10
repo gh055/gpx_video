@@ -14,7 +14,7 @@ import sys
 import DaVinciResolveScript as dvr_script
 
 
-class DaVinci:
+class DaVinciResolveSession:
 
     """
     Get project details from currently open Davinci Resolve session
@@ -34,6 +34,7 @@ class DaVinci:
             projectManager = resolve.GetProjectManager()
             project = projectManager.GetCurrentProject()
             self.timeline = project.GetCurrentTimeline()
+            self.media_pool = project.GetMediaPool()
         else:
             print("Could not connect to Davinci Resolve (is it running?)")
             sys.exit(1)      
@@ -57,8 +58,50 @@ class DaVinci:
 
 
     """
-    Get clips on named video track
+    Returns selected clips on the timeline if any exist; 
+    otherwise falls back to returning all clips on the specified track.
     """
-    def get_timeline_clips(self, track_type = 'video', track_number = 1):
+    def get_timeline_clips(self, track_type = 'video', track_index = 1):
 
-        return self.timeline.GetItemListInTrack(track_type, track_number)
+        # Get all selected items on the track from the timeline
+        all_selected_items = self.timeline.GetSelectedClips()
+        
+        # Filter items by video type
+        selected_video_items = [
+            item for item in all_selected_items 
+            if (item.GetTrackTypeAndIndex() == [track_type, track_index])
+        ]
+
+        # Return selected items if present; otherwise fall back to all items on track
+        if selected_video_items:
+            return selected_video_items
+        else:
+            return self.timeline.GetItemListInTrack(track_type, track_index)
+
+
+    """
+    Imports the rendered overlay MOV into the Media Pool and places it
+    onto the specified track at record_frame_start.
+    """
+    def import_and_place_overlay(self, file_path, record_frame_start, track_index = 2):
+
+            # Import rendered clip to Media Pool
+            imported_items = self.media_pool.ImportMedia([file_path])
+
+            if not imported_items:
+                print(f"Failed to import: {file_path}")
+                return None
+            
+            media_item = imported_items[0]
+
+            # Add clip to timeline on the higher track
+            clip_info = {
+                "mediaPoolItem": media_item,
+                "startFrame": record_frame_start,
+                "recordFrame": record_frame_start,
+                "trackIndex": track_index
+            }
+            
+            # AppendToTimeline creates timeline entries using clip specification dictionaries
+            result = self.media_pool.AppendToTimeline([clip_info])
+            return result

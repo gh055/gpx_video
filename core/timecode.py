@@ -26,6 +26,7 @@ class TimecodeDriftCalculator:
     def __init__(self, tc_cfg, gpx_start_date):
 
         self.manual_offset = tc_cfg.get("tc_offset")
+        self.fps = tc_cfg.get("fps", 29.97)
 
         # Check if manual offset override is specified
         if self.manual_offset is not None:
@@ -39,7 +40,6 @@ class TimecodeDriftCalculator:
             if len(fix_points) < 2:
                 raise ValueError("At least 2 fix_points are required for drift compensation.")
 
-            self.fps = tc_cfg.get("fps", 29.97)
             self.local_tz = TimeUtils.parse_timezone(tc_cfg.get("timezone", "UTC"))
 
             gpx_epoch_list = []

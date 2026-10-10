@@ -40,7 +40,7 @@ import sys
 
 from core.timeutils import TimeUtils
 from core.timecode import TimecodeDriftCalculator
-from core.davinci_api import DaVinci
+from core.davinci_api import DaVinciResolveSession
 from core.arg_parser import parse_arguments
 from core.gpx_parser import GPXParser
 from core.context import RenderContext
@@ -57,7 +57,7 @@ if __name__ == "__main__":
     args, config = parse_arguments()
 
     # Get current Davinci Resolve project details
-    dr = DaVinci()
+    dr = DaVinciResolveSession()
 
     # Get the project's video properties
     pr_canvas_width, pr_canvas_height, pr_frame_rate = dr.get_video_props()
@@ -139,6 +139,7 @@ if __name__ == "__main__":
         clip_props = media_pool_item.GetClipProperty()
         start_tc_str = clip_props.get("Start TC", "00:00:00:00")
         start_tc = TimeUtils.tc_to_seconds(start_tc_str, frame_rate)
+        start_frame = item.GetStart()
         total_frames = item.GetDuration()    # Actual number of frames on timeline
         left_offset = item.GetLeftOffset()      # Trimmed starting offset in frames
 
@@ -146,7 +147,8 @@ if __name__ == "__main__":
         trimmed_start_tc = start_tc + (left_offset / frame_rate)
 
         # Create the video sequence for this clip
-        ffmpeg.open(canvas_width, canvas_height, frame_rate, f"{output_path}/{output_prefix}{idx:04d}.mov")
+        file_path = f"{output_path}/{output_prefix}{start_frame}.mov"
+        ffmpeg.open(canvas_width, canvas_height, frame_rate, file_path)
         frame_count = 0
 
         # Loop through all individual video frames
@@ -165,8 +167,15 @@ if __name__ == "__main__":
             ffmpeg.write(surface.get_data())
 
             frame_count += 1
-            print(f"Clip {idx}: {frame_count} of {total_frames} frames\r", end='', flush=True)
+            print(f"Clip {idx + 1}: {frame_count} of {total_frames} frames\r", end='', flush=True)
         
         # Close output video file
         print()
         ffmpeg.close()
+
+        # Import and place rendered clip on timeline
+        dr.import_and_place_overlay(
+            file_path=file_path,
+            record_frame_start=start_frame,
+            track_index=2
+        )

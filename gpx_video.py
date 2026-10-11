@@ -119,7 +119,12 @@ if __name__ == "__main__":
 
     # Extract clip metadata directly from Timeline Track 1 (Camera Footage)
     clips = dr.get_timeline_clips()
-    print(f"Total # of clips: {len(clips)}")
+    num_clips = len(clips)
+    if num_clips > 0:
+        print(f"Total # of clips: {num_clips}")
+    else:
+        print("No clips selected on timeline. Exiting.")
+        sys.exit(1)
 
     # Create a working surface for the rendering
     surface, ctx = renderer.empty_frame()

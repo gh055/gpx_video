@@ -73,10 +73,11 @@ class DaVinciResolveSession:
         ]
 
         # Return selected items if present; otherwise fall back to all items on track
-        if selected_video_items:
-            return selected_video_items
-        else:
-            return self.timeline.GetItemListInTrack(track_type, track_index)
+        # if selected_video_items:
+        #     return selected_video_items
+        # else:
+        #     return self.timeline.GetItemListInTrack(track_type, track_index)
+        return selected_video_items
 
 
     """

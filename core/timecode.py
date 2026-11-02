@@ -27,21 +27,29 @@ class TimecodeDriftCalculator:
 
         self.manual_offset = tc_cfg.get("tc_offset")
         self.fps = tc_cfg.get("fps", 29.97)
+        self.auto_drift = False
+        self.local_tz = TimeUtils.parse_timezone(tc_cfg.get("timezone", "UTC"))
+
+        fix_points = tc_cfg.get("fix_points", [])
+        num_fixpoints = len(fix_points)
 
         # Check if manual offset override is specified
         if self.manual_offset is not None:
             self.base_offset = float(self.manual_offset)
-            self.auto_drift = False
 
-        else:
-            self.auto_drift = True
-            fix_points = tc_cfg.get("fix_points", [])
+        elif num_fixpoints == 1:
 
-            if len(fix_points) < 2:
-                raise ValueError("At least 2 fix_points are required for drift compensation.")
+            # Single fix point specified: disable auto drift and compute static offset
+            pt = fix_points[0]
+            t_tc = TimeUtils.tc_to_seconds(str(pt["tc"]), fps=self.fps)
+            t_gpx = self._parse_local_time_to_utc_epoch(str(pt["gpx"]), gpx_start_date)
+            
+            # Base Offset = GPX Epoch - Camera TC Seconds
+            self.base_offset = t_gpx - t_tc
 
-            self.local_tz = TimeUtils.parse_timezone(tc_cfg.get("timezone", "UTC"))
+        elif num_fixpoints >= 2:
 
+            # Standard drift compensation with multiple fixpoints
             gpx_epoch_list = []
             tc_seconds_list = []
 
@@ -58,6 +66,10 @@ class TimecodeDriftCalculator:
             sorted_pairs = sorted(zip(tc_seconds_list, gpx_epoch_list), key=lambda x: x[0])
             self.tc_points = np.array([p[0] for p in sorted_pairs])
             self.gpx_points = np.array([p[1] for p in sorted_pairs])
+        
+        else:
+            # Neither tc_offset nor fix_points specified; manual_offset = 0 assumed thereby.
+            self.base_offset = 0.0
 
 
     """

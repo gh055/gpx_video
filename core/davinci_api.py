@@ -72,6 +72,9 @@ class DaVinciResolveSession:
             if (item.GetTrackTypeAndIndex() == [track_type, track_index])
         ]
 
+        # Sort clips by timecode
+        selected_video_items.sort(key=lambda x: x.GetStart())
+        
         # Return selected items if present; otherwise fall back to all items on track
         # if selected_video_items:
         #     return selected_video_items
